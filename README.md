@@ -5,7 +5,7 @@ This scaffold runs `nf-core/rnaseq` version `3.23.0` for two separately sorted d
 - `mouse`
 - `rat`
 
-It assumes you will sort the mixed local `V-EEEV Nat Hist` FASTQs into species-specific input folders before uploading to ISAAC-NG. The scripts do not infer species from filenames.
+This pipeline expects the mixed local `V-EEEV Nat Hist` FASTQs to be sorted into species-specific input folders before upload to ISAAC-NG. The scripts do not infer species from filenames.
 
 ## Folder Contract
 
@@ -51,8 +51,8 @@ Central settings:
 
 ## Upload Workflow
 
-1. Sort your FASTQs locally into `inputs/mouse/` and `inputs/rat/`.
-2. Copy this entire folder to ISAAC-NG. Put scripts in home or project storage, and put large FASTQs where you want them staged before the run.
+1. Sort FASTQs locally into `inputs/mouse/` and `inputs/rat/`.
+2. Copy this entire folder to ISAAC-NG. Scripts may live in home or project storage, and large FASTQs may be staged wherever the run should read them from.
 3. Drop the finalized host and virus references into the matching species reference folders.
 4. Launch from a compute node through Slurm, not from the login node.
 
@@ -63,11 +63,11 @@ Example copy targets on ISAAC-NG:
 
 ## Environment
 
-Edit `settings.env` first. That is the main place to change runtime settings.
+`settings.env` is the main place to change runtime settings.
 
-Then confirm the manager job resources near the top of `submit_rnaseq.sh` if you want different `#SBATCH` settings.
+The manager job resources near the top of `submit_rnaseq.sh` control the `#SBATCH` settings.
 
-You can still override anything from the shell if needed, but the default workflow is to keep your normal values in `settings.env`.
+Shell overrides are still supported, but the default workflow keeps normal values in `settings.env`.
 
 Example settings:
 
@@ -85,12 +85,12 @@ export NXF_HOME="$SCRATCHDIR/veeev_nat_hist_nfcore/.nextflow"
 export SHARED_VIRUS_GENE_ID="VEEV_SHARED_GENE"
 ```
 
-`ISAAC_ACCOUNT` is required for Nextflow child jobs. `SBATCH_ACCOUNT` is recommended so the manager job itself also lands under the correct account when you run `sbatch submit_rnaseq.sh <species>`.
+`ISAAC_ACCOUNT` is required for Nextflow child jobs. `SBATCH_ACCOUNT` is recommended so the manager job also lands under the correct account when `sbatch submit_rnaseq.sh <species>` is used.
 
 Notes:
 
 - `SCRATCHDIR` must exist in the Slurm job environment. The scaffold no longer falls back to `/tmp`.
-- Keep `NFCORE_PROFILE=singularity` unless your ISAAC environment requires something different.
+- `NFCORE_PROFILE=singularity` is the default unless the ISAAC environment requires something different.
 - `DEFAULT_STRANDEDNESS` can be `auto`, `forward`, `reverse`, or `unstranded`.
 - Leave `CONTAINER_MODULE` empty if `singularity` is already on `PATH` on ISAAC.
 - The launcher checks `nextflow -version` and stops unless it is at least `25.04.3`, which is required by `nf-core/rnaseq` `3.23.0`.
@@ -104,7 +104,7 @@ sbatch submit_rnaseq.sh mouse
 sbatch submit_rnaseq.sh rat
 ```
 
-Optional lightweight preflight before you submit:
+Optional lightweight preflight before submission:
 
 ```bash
 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
