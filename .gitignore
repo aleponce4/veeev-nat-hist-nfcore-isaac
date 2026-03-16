@@ -1,0 +1,27 @@
+# Runtime outputs and large analysis products
+results/
+metadata/*.csv
+references/*/build/
+
+# User-provided inputs and references
+inputs/mouse/*
+inputs/rat/*
+!inputs/mouse/.gitkeep
+!inputs/rat/.gitkeep
+references/mouse/host/*
+references/mouse/virus/*
+references/rat/host/*
+references/rat/virus/*
+!references/mouse/host/.gitkeep
+!references/mouse/virus/.gitkeep
+!references/rat/host/.gitkeep
+!references/rat/virus/.gitkeep
+
+# Python cache
+bin/__pycache__/
+*.pyc
+
+# Temporary/editor files
+.DS_Store
+*.swp
+*.swo
