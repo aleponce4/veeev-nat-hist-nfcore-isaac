@@ -61,6 +61,55 @@ Example copy targets on ISAAC-NG:
 - scripts and config: `/nfs/home/<netid>/veeev_nat_hist_nfcore`
 - runtime output: `$SCRATCHDIR/veeev_nat_hist_nfcore`
 
+## Reference Staging
+
+The scaffold expects one host FASTA, one host GTF, one virus FASTA, and one virus annotation file per species. Host references are pinned here for reproducibility to the current Ensembl release used when this scaffold was prepared:
+
+- mouse host: Ensembl release `115`, assembly `GRCm39`
+- rat host: Ensembl release `115`, assembly `GRCr8`
+
+The virus reference is still a placeholder and should be filled in once the final viral genome and annotation are selected.
+
+Create the reference directories:
+
+```bash
+mkdir -p references/mouse/host references/mouse/virus
+mkdir -p references/rat/host references/rat/virus
+```
+
+Pinned host download commands for Ensembl release `115`:
+
+```bash
+curl -L "https://ftp.ensembl.org/pub/release-115/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz" \
+  -o references/mouse/host/mouse.fa.gz
+curl -L "https://ftp.ensembl.org/pub/release-115/gtf/mus_musculus/Mus_musculus.GRCm39.115.gtf.gz" \
+  -o references/mouse/host/mouse.gtf.gz
+
+curl -L "https://ftp.ensembl.org/pub/release-115/fasta/rattus_norvegicus/dna/Rattus_norvegicus.GRCr8.dna.primary_assembly.fa.gz" \
+  -o references/rat/host/rat.fa.gz
+curl -L "https://ftp.ensembl.org/pub/release-115/gtf/rattus_norvegicus/Rattus_norvegicus.GRCr8.115.gtf.gz" \
+  -o references/rat/host/rat.gtf.gz
+```
+
+Virus download pattern with placeholder URLs:
+
+```bash
+curl -L "<mouse-virus-fasta-url>" -o references/mouse/virus/virus.fa
+curl -L "<mouse-virus-gff-url>"   -o references/mouse/virus/virus.gff3
+
+curl -L "<rat-virus-fasta-url>" -o references/rat/virus/virus.fa
+curl -L "<rat-virus-gff-url>"   -o references/rat/virus/virus.gff3
+```
+
+The file basenames do not matter. The helper scripts only require that each folder contains exactly one matching file of the expected type.
+
+Reference preflight:
+
+```bash
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat
+```
+
 ## Environment
 
 `settings.env` is the main place to change runtime settings.
