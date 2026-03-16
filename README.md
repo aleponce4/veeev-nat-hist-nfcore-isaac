@@ -77,18 +77,11 @@ mkdir -p references/mouse/host references/mouse/virus
 mkdir -p references/rat/host references/rat/virus
 ```
 
-Pinned host download commands for Ensembl release `115`:
+Pinned host download helper:
 
 ```bash
-curl -L "https://ftp.ensembl.org/pub/release-115/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz" \
-  -o references/mouse/host/mouse.fa.gz
-curl -L "https://ftp.ensembl.org/pub/release-115/gtf/mus_musculus/Mus_musculus.GRCm39.115.gtf.gz" \
-  -o references/mouse/host/mouse.gtf.gz
-
-curl -L "https://ftp.ensembl.org/pub/release-115/fasta/rattus_norvegicus/dna/Rattus_norvegicus.GRCr8.dna.primary_assembly.fa.gz" \
-  -o references/rat/host/rat.fa.gz
-curl -L "https://ftp.ensembl.org/pub/release-115/gtf/rattus_norvegicus/Rattus_norvegicus.GRCr8.115.gtf.gz" \
-  -o references/rat/host/rat.gtf.gz
+chmod +x bin/download_host_references.sh
+bash bin/download_host_references.sh all
 ```
 
 Virus download pattern with placeholder URLs:
@@ -102,6 +95,19 @@ curl -L "<rat-virus-gff-url>"   -o references/rat/virus/virus.gff3
 ```
 
 The file basenames do not matter. The helper scripts only require that each folder contains exactly one matching file of the expected type.
+
+ISAAC-NG transfer note:
+
+- Download external references locally, not from the ISAAC login node.
+- Upload references and FASTQs through the ISAAC data transfer nodes `dtn1.isaac.utk.edu` or `dtn2.isaac.utk.edu`.
+- `dtn1` or `dtn2` should be used for `scp`, `sftp`, or `rsync`; `Globus` is preferred for large transfers.
+
+Example upload to ISAAC using `rsync` through `dtn1`:
+
+```bash
+rsync -av references/mouse/host/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/mouse/host/
+rsync -av references/rat/host/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/rat/host/
+```
 
 Reference preflight:
 
