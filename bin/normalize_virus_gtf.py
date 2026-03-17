@@ -28,8 +28,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("output_path", help="Output GTF path")
     parser.add_argument(
         "--shared-gene-id",
-        default="VEEV_SHARED_GENE",
-        help='gene_id to assign to all viral features (default: "VEEV_SHARED_GENE")',
+        default="VIRAL_SHARED_GENE",
+        help='gene_id to assign to all viral features (default: "VIRAL_SHARED_GENE")',
     )
     return parser.parse_args()
 

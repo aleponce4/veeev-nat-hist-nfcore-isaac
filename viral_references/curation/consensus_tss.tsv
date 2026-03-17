@@ -1,0 +1,2 @@
+virus_id	source_fasta	source_cds_gtf	candidate_datasets	selected_samples	seqid	genome_length	structural_start	search_start	search_end	phase1_pairs	phase2_pairs	top_n	jump_window	jump_multiplier	consensus_tss
+EEEV	EEEV_FL93.fa	EEEV_FL93 (CDS).gtf	mouse_eeev	43600,257,274,42900,259	EEEV_FL93	11704	7595	7195	7795	100000	1000000	5	10	5.0	7550

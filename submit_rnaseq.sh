@@ -20,18 +20,20 @@ set -euo pipefail
 #   cd /path/to/veeev_nat_hist_nfcore
 #   nano settings.env
 #   module avail nextflow
-#   PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
+#   python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist"
+#   PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
 #   export ISAAC_ACCOUNT="ACF-UTKXXXX"
 #   export SBATCH_ACCOUNT="$ISAAC_ACCOUNT"
-#   DRY_RUN=1 SKIP_MODULE_LOAD=1 bash submit_rnaseq.sh mouse
-#   sbatch submit_rnaseq.sh mouse
-#   sbatch submit_rnaseq.sh rat
+#   DRY_RUN=1 SKIP_MODULE_LOAD=1 bash submit_rnaseq.sh mouse_veev
+#   sbatch submit_rnaseq.sh mouse_veev
+#   sbatch submit_rnaseq.sh mouse_eeev
+#   sbatch submit_rnaseq.sh rat_veev
 #   squeue -u <netid>
 
 usage() {
     cat <<'EOF'
 Usage:
-  sbatch submit_rnaseq.sh <mouse|rat>
+  sbatch submit_rnaseq.sh <mouse_veev|mouse_eeev|rat_veev>
 
 Primary settings:
   edit settings.env
@@ -42,10 +44,11 @@ Required final value:
 Quick HPC commands:
   cd /path/to/veeev_nat_hist_nfcore
   nano settings.env
-  PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
+  python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist"
+  PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
   export ISAAC_ACCOUNT="ACF-UTKXXXX"
   export SBATCH_ACCOUNT="$ISAAC_ACCOUNT"
-  sbatch submit_rnaseq.sh mouse
+  sbatch submit_rnaseq.sh mouse_veev
 EOF
 }
 
@@ -57,9 +60,9 @@ fi
 # Step 1: identify which dataset to run.
 dataset=$1
 case "$dataset" in
-    mouse|rat) ;;
+    mouse_veev|mouse_eeev|rat_veev) ;;
     *)
-        echo "Dataset must be 'mouse' or 'rat', got: $dataset" >&2
+        echo "Dataset must be one of: mouse_veev, mouse_eeev, rat_veev. Got: $dataset" >&2
         exit 1
         ;;
 esac
@@ -79,10 +82,24 @@ samplesheet="$script_dir/metadata/${dataset}_samplesheet.csv"
 fastq_dir="$script_dir/inputs/$dataset"
 reference_builder="$script_dir/bin/build_combined_reference.sh"
 samplesheet_builder="$script_dir/bin/make_samplesheet.sh"
-combined_fasta="$script_dir/references/$dataset/build/combined.fa"
-combined_gtf="$script_dir/references/$dataset/build/combined.gtf"
-host_dir="$script_dir/references/$dataset/host"
-virus_dir="$script_dir/references/$dataset/virus"
+case "$dataset" in
+    mouse_veev)
+        host_ref="mouse"
+        virus_ref="VEEV"
+        ;;
+    mouse_eeev)
+        host_ref="mouse"
+        virus_ref="EEEV"
+        ;;
+    rat_veev)
+        host_ref="rat"
+        virus_ref="VEEV"
+        ;;
+esac
+combined_fasta="$script_dir/references/build/$dataset/combined.fa"
+combined_gtf="$script_dir/references/build/$dataset/combined.gtf"
+host_dir="$script_dir/references/$host_ref"
+virus_dir="$script_dir/references/$virus_ref"
 
 nextflow_module=${NEXTFLOW_MODULE:-}
 container_module=${CONTAINER_MODULE:-}
@@ -119,11 +136,14 @@ find_single_matching_file() {
 }
 
 check_fastq_inputs() {
+    local first_r1
+
     if [[ ! -d "$fastq_dir" ]]; then
         echo "FASTQ input directory not found: $fastq_dir" >&2
         exit 1
     fi
-    if ! find "$fastq_dir" -maxdepth 1 -type f -name '*_R1_001.fastq.gz' | grep -q .; then
+    first_r1=$(find "$fastq_dir" -maxdepth 1 \( -type f -o -type l \) -name '*_R1_001.fastq.gz' -print -quit)
+    if [[ -z "$first_r1" ]]; then
         echo "No R1 FASTQ files found in: $fastq_dir" >&2
         exit 1
     fi
@@ -149,7 +169,8 @@ check_reference_inputs
 if [[ "$preflight_only" == "1" ]]; then
     printf 'Preflight checks passed for %s\n' "$dataset"
     printf 'FASTQs: %s\n' "$fastq_dir"
-    printf 'References: %s and %s\n' "$host_dir" "$virus_dir"
+    printf 'Host reference dir:  %s (%s)\n' "$host_dir" "$host_ref"
+    printf 'Virus reference dir: %s (%s)\n' "$virus_dir" "$virus_ref"
     exit 0
 fi
 

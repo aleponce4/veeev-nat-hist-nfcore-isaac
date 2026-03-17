@@ -1,0 +1,13 @@
+##gff-version 3.2.1
+##sequence-region VEEV_TrD 1 11446
+VEEV_TrD	.	CDS	45	7526	.	+	0	Name=CDS_1
+VEEV_TrD	.	CDS	45	1649	.	+	0	Name=nsP1
+VEEV_TrD	.	CDS	1650	4031	.	+	0	Name=nsP2
+VEEV_TrD	.	CDS	4032	5702	.	+	0	Name=nsP3
+VEEV_TrD	.	CDS	5703	7523	.	+	0	Name=nsP4
+VEEV_TrD	.	CDS	7562	11329	.	+	0	Name=CDS_2
+VEEV_TrD	.	CDS	7562	8386	.	+	0	Name=Capsid
+VEEV_TrD	.	CDS	8387	8563	.	+	0	Name=E3
+VEEV_TrD	.	CDS	8564	9832	.	+	0	Name=E2
+VEEV_TrD	.	CDS	9833	10000	.	+	0	Name=6k
+VEEV_TrD	.	CDS	10001	11326	.	+	0	Name=E1

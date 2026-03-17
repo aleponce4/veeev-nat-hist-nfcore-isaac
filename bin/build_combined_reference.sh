@@ -3,15 +3,15 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: build_combined_reference.sh <mouse|rat>
+Usage: build_combined_reference.sh <mouse_veev|mouse_eeev|rat_veev>
 
 Builds:
-  references/<species>/build/combined.fa
-  references/<species>/build/combined.gtf
+  references/build/<dataset>/combined.fa
+  references/build/<dataset>/combined.gtf
 
 Expected inputs:
-  references/<species>/host/   -> exactly one FASTA and exactly one GTF
-  references/<species>/virus/  -> exactly one FASTA and exactly one GTF/GFF/GFF3
+  references/<host_ref>/       -> exactly one host FASTA and exactly one host GTF
+  references/<virus_ref>/      -> exactly one virus FASTA and exactly one GTF/GFF/GFF3
 EOF
 }
 
@@ -20,25 +20,37 @@ if [[ $# -ne 1 ]]; then
     exit 1
 fi
 
-species=$1
-case "$species" in
-    mouse|rat) ;;
+dataset=$1
+case "$dataset" in
+    mouse_veev)
+        host_ref="mouse"
+        virus_ref="VEEV"
+        ;;
+    mouse_eeev)
+        host_ref="mouse"
+        virus_ref="EEEV"
+        ;;
+    rat_veev)
+        host_ref="rat"
+        virus_ref="VEEV"
+        ;;
     *)
-        echo "Species must be 'mouse' or 'rat', got: $species" >&2
+        echo "Dataset must be one of: mouse_veev, mouse_eeev, rat_veev. Got: $dataset" >&2
         exit 1
         ;;
 esac
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root_dir=$(cd "$script_dir/.." && pwd)
-species_dir="$root_dir/references/$species"
-host_dir="$species_dir/host"
-virus_dir="$species_dir/virus"
-build_dir="$species_dir/build"
-shared_gene_id=${SHARED_VIRUS_GENE_ID:-VEEV_SHARED_GENE}
+host_dir="$root_dir/references/$host_ref"
+virus_dir="$root_dir/references/$virus_ref"
+build_dir="$root_dir/references/build/$dataset"
+shared_gene_id="$virus_ref"
 
 if [[ ! -d "$host_dir" || ! -d "$virus_dir" ]]; then
-    echo "Expected reference directories are missing under $species_dir" >&2
+    echo "Expected reference directories are missing under $root_dir/references" >&2
+    echo "Host directory:  $host_dir" >&2
+    echo "Virus directory: $virus_dir" >&2
     exit 1
 fi
 
@@ -145,7 +157,7 @@ fi
 } >"$combined_gtf"
 
 if [[ ! -s "$combined_fasta" || ! -s "$combined_gtf" ]]; then
-    echo "Combined reference build failed for $species" >&2
+    echo "Combined reference build failed for $dataset" >&2
     exit 1
 fi
 

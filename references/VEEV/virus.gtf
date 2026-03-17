@@ -1,0 +1,5 @@
+VEEV_TrD	curated	gene	1	11446	.	+	.	gene_id "VEEV"; gene_name "VEEV";
+VEEV_TrD	curated	transcript	1	11446	.	+	.	gene_id "VEEV"; gene_name "VEEV"; transcript_id "VEEV_49S"; transcript_name "VEEV_49S";
+VEEV_TrD	curated	exon	1	11446	.	+	.	gene_id "VEEV"; gene_name "VEEV"; transcript_id "VEEV_49S"; transcript_name "VEEV_49S";
+VEEV_TrD	curated	transcript	7567	11446	.	+	.	gene_id "VEEV"; gene_name "VEEV"; transcript_id "VEEV_26S"; transcript_name "VEEV_26S";
+VEEV_TrD	curated	exon	7567	11446	.	+	.	gene_id "VEEV"; gene_name "VEEV"; transcript_id "VEEV_26S"; transcript_name "VEEV_26S";

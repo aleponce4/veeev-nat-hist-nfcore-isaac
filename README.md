@@ -1,11 +1,18 @@
 # V-EEEV Nat Hist nf-core/rnaseq ISAAC-NG Handoff
 
-This scaffold runs `nf-core/rnaseq` version `3.23.0` for two separately sorted datasets:
+This scaffold runs `nf-core/rnaseq` version `3.23.0` for the three dataset groups present in the `V-EEEV Nat Hist` delivery:
 
-- `mouse`
-- `rat`
+- `mouse_veev`
+- `mouse_eeev`
+- `rat_veev`
 
-This pipeline expects the mixed local `V-EEEV Nat Hist` FASTQs to be sorted into species-specific input folders before upload to ISAAC-NG. The scripts do not infer species from filenames.
+The mixed delivery can be classified automatically from the FASTQ stems. The staging command handles the source directory name `V-EEEV Nat Hist` safely as long as the path is quoted in the shell.
+
+The viral references are data-driven and already tracked in this repo:
+
+- raw viral source files live under `viral_references/raw/`
+- empirical TSS ranking results live under `viral_references/curation/`
+- curated pipeline-facing viral references live under `references/VEEV/` and `references/EEEV/`
 
 ## Folder Contract
 
@@ -15,34 +22,40 @@ Populate the scaffold like this on ISAAC-NG before launching:
 veeev_nat_hist_nfcore/
 ├── bin/
 ├── inputs/
-│   ├── mouse/
-│   └── rat/
+│   ├── mouse_veev/
+│   ├── mouse_eeev/
+│   └── rat_veev/
 ├── metadata/
 ├── settings.env
 ├── references/
 │   ├── mouse/
-│   │   ├── host/
-│   │   ├── virus/
-│   │   └── build/
-│   └── rat/
-│       ├── host/
-│       ├── virus/
-│       └── build/
+│   ├── rat/
+│   ├── EEEV/
+│   ├── VEEV/
+│   └── build/
+├── viral_references/
+│   ├── raw/
+│   └── curation/
 ├── results/
 ├── nextflow.config
 └── submit_rnaseq.sh
 ```
 
-Expected reference inputs for each species:
+Expected reference inputs:
 
-- `references/<species>/host/`: exactly one host FASTA and exactly one host GTF
-- `references/<species>/virus/`: exactly one virus FASTA and exactly one virus GTF or GFF/GFF3
+- `references/mouse/`: exactly one mouse host FASTA and exactly one mouse host GTF
+- `references/rat/`: exactly one rat host FASTA and exactly one rat host GTF
+- `references/EEEV/`: curated empirical `virus.fa` and `virus.gtf`
+- `references/VEEV/`: curated empirical `virus.fa` and `virus.gtf`
 
 Generated files:
 
-- `metadata/<species>_samplesheet.csv`
-- `references/<species>/build/combined.fa`
-- `references/<species>/build/combined.gtf`
+- `metadata/nat_hist_manifest.csv`
+- `metadata/<dataset>_samplesheet.csv`
+- `references/build/<dataset>/combined.fa`
+- `references/build/<dataset>/combined.gtf`
+- `viral_references/curation/empirical_tss_results.tsv`
+- `viral_references/curation/consensus_tss.tsv`
 
 Central settings:
 
@@ -51,9 +64,9 @@ Central settings:
 
 ## Upload Workflow
 
-1. Sort FASTQs locally into `inputs/mouse/` and `inputs/rat/`.
-2. Copy this entire folder to ISAAC-NG. Scripts may live in home or project storage, and large FASTQs may be staged wherever the run should read them from.
-3. Drop the finalized host and virus references into the matching species reference folders.
+1. Copy this entire folder to ISAAC-NG.
+2. Stage the mixed delivery into `inputs/mouse_veev/`, `inputs/mouse_eeev/`, and `inputs/rat_veev/` with `bin/stage_nat_hist_inputs.py`.
+3. Drop the finalized host and virus references into the matching reference folders.
 4. Launch from a compute node through Slurm, not from the login node.
 
 Example copy targets on ISAAC-NG:
@@ -63,18 +76,17 @@ Example copy targets on ISAAC-NG:
 
 ## Reference Staging
 
-The scaffold expects one host FASTA, one host GTF, one virus FASTA, and one virus annotation file per species. Host references are pinned here for reproducibility to the current Ensembl release used when this scaffold was prepared:
+The scaffold expects separate host and virus reference folders. Host references are pinned here for reproducibility to the current Ensembl release used when this scaffold was prepared:
 
 - mouse host: Ensembl release `115`, assembly `GRCm39`
 - rat host: Ensembl release `115`, assembly `GRCr8`
 
-The virus reference is still a placeholder and should be filled in once the final viral genome and annotation are selected.
+The host references are downloaded into `references/mouse/` and `references/rat/`. The viral references are already tracked in the repo as raw source files plus curated empirical outputs.
 
 Create the reference directories:
 
 ```bash
-mkdir -p references/mouse/host references/mouse/virus
-mkdir -p references/rat/host references/rat/virus
+mkdir -p references/mouse references/rat references/EEEV references/VEEV
 ```
 
 Pinned host download helper:
@@ -87,14 +99,35 @@ bash bin/download_host_references.sh all
 Virus download pattern with placeholder URLs:
 
 ```bash
-curl -L "<mouse-virus-fasta-url>" -o references/mouse/virus/virus.fa
-curl -L "<mouse-virus-gff-url>"   -o references/mouse/virus/virus.gff3
-
-curl -L "<rat-virus-fasta-url>" -o references/rat/virus/virus.fa
-curl -L "<rat-virus-gff-url>"   -o references/rat/virus/virus.gff3
+ls -lh viral_references/raw/EEEV
+ls -lh viral_references/raw/VEEV
 ```
 
-The file basenames do not matter. The helper scripts only require that each folder contains exactly one matching file of the expected type.
+The committed raw viral source files are:
+
+- `viral_references/raw/VEEV/VEEV_TrD.fa`
+- `viral_references/raw/VEEV/VEEV_TrD (CDS).gtf`
+- `viral_references/raw/EEEV/EEEV_FL93.fa`
+- `viral_references/raw/EEEV/EEEV_FL93 (CDS).gtf`
+
+The committed curated viral outputs are:
+
+- `references/VEEV/virus.fa`
+- `references/VEEV/virus.gtf`
+- `references/EEEV/virus.fa`
+- `references/EEEV/virus.gtf`
+
+These curated viral GTFs contain exactly two transcript models per virus:
+
+- full-length genomic RNA `49S`
+- empirical subgenomic RNA `26S`
+
+Both transcripts share one `gene_id` and keep distinct `transcript_id` values.
+
+Current empirical consensus TSS values:
+
+- `VEEV_26S` starts at `7567`
+- `EEEV_26S` starts at `7550`
 
 ISAAC-NG transfer note:
 
@@ -105,15 +138,89 @@ ISAAC-NG transfer note:
 Example upload to ISAAC using `rsync` through `dtn1`:
 
 ```bash
-rsync -av references/mouse/host/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/mouse/host/
-rsync -av references/rat/host/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/rat/host/
+rsync -av references/mouse/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/mouse/
+rsync -av references/rat/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/rat/
+rsync -av references/EEEV/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/EEEV/
+rsync -av references/VEEV/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/references/VEEV/
+rsync -av viral_references/ <netid>@dtn1.isaac.utk.edu:/nfs/home/<netid>/veeev-nat-hist-nfcore-isaac/viral_references/
+```
+
+## Viral Curation
+
+The viral references are not taken directly from the source GTF/GFF coordinates. They are derived from the RNA-seq data with a two-tier viral-only pilot mapping workflow implemented in `bin/curate_viral_references.py`.
+
+Phase 1:
+
+- map the first `100k` read pairs from every candidate sample to the virus only
+- rank samples by `viral mapped reads / total sampled reads`
+
+Phase 2:
+
+- deep-map the first `1M` read pairs from the top `5` ranked samples
+- calculate `samtools depth` across the structural-junction search window
+- detect the first strong coverage jump as the empirical `26S` TSS
+- take the median of the successful top-sample calls as the final consensus
+
+Virus pools:
+
+- `VEEV`: `mouse_veev` + `rat_veev`
+- `EEEV`: `mouse_eeev`
+
+Required local tools for curation:
+
+- `minimap2`
+- `samtools`
+- `python3`
+
+Example rerun command from the repo root:
+
+```bash
+python3 bin/curate_viral_references.py all \
+  --mapper-bin /home/alex_ubuntu/miniconda3/envs/vpipe/bin/minimap2 \
+  --samtools-bin /home/alex_ubuntu/miniconda3/envs/vpipe/bin/samtools \
+  --jobs 4
+```
+
+Tracked outputs written by that command:
+
+- `viral_references/curation/empirical_tss_results.tsv`
+- `viral_references/curation/consensus_tss.tsv`
+- `references/VEEV/virus.fa`
+- `references/VEEV/virus.gtf`
+- `references/EEEV/virus.fa`
+- `references/EEEV/virus.gtf`
+
+Input staging from the mixed delivery:
+
+```bash
+python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist"
+```
+
+Filename rules used by the staging command:
+
+- `100-199` and `300-399` -> `mouse_veev`
+- `200-299`, `400-499`, and `4xxxx` -> `mouse_eeev`
+- `B*` and `L*` -> `rat_veev`
+
+That command will:
+
+- write `metadata/nat_hist_manifest.csv`
+- classify the mixed FASTQs into `mouse_veev`, `mouse_eeev`, and `rat_veev`
+- stage symlinks under `inputs/` without duplicating the original FASTQs
+
+Optional staging flags:
+
+```bash
+python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist" --manifest-only
+python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist" --method copy --clean
 ```
 
 Reference preflight:
 
 ```bash
-PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
-PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_eeev
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat_veev
 ```
 
 ## Environment
@@ -137,10 +244,9 @@ export RESULTS_BASE="$SCRATCHDIR/veeev_nat_hist_nfcore/results"
 export WORK_ROOT="$SCRATCHDIR/veeev_nat_hist_nfcore/work"
 export CONTAINER_CACHE="$SCRATCHDIR/veeev_nat_hist_nfcore/containers"
 export NXF_HOME="$SCRATCHDIR/veeev_nat_hist_nfcore/.nextflow"
-export SHARED_VIRUS_GENE_ID="VEEV_SHARED_GENE"
 ```
 
-`ISAAC_ACCOUNT` is required for Nextflow child jobs. `SBATCH_ACCOUNT` is recommended so the manager job also lands under the correct account when `sbatch submit_rnaseq.sh <species>` is used.
+`ISAAC_ACCOUNT` is required for Nextflow child jobs. `SBATCH_ACCOUNT` is recommended so the manager job also lands under the correct account when `sbatch submit_rnaseq.sh <dataset>` is used.
 
 Notes:
 
@@ -152,29 +258,31 @@ Notes:
 
 ## Run
 
-Submit one species at a time:
+Submit one dataset at a time:
 
 ```bash
-sbatch submit_rnaseq.sh mouse
-sbatch submit_rnaseq.sh rat
+sbatch submit_rnaseq.sh mouse_veev
+sbatch submit_rnaseq.sh mouse_eeev
+sbatch submit_rnaseq.sh rat_veev
 ```
 
 Optional lightweight preflight before submission:
 
 ```bash
-PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse
-PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_eeev
+PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat_veev
 ```
 
 That preflight checks:
 
-- the species FASTQ folder exists and has `*_R1_001.fastq.gz` files
+- the dataset FASTQ folder exists and has `*_R1_001.fastq.gz` files
 - the host and virus reference folders exist
 - each reference folder has exactly one expected FASTA and annotation file
 
 The launcher will:
 
-1. build the combined host+virus reference for the selected species
+1. build the combined host+virus reference for the selected dataset
 2. auto-generate the nf-core samplesheet
 3. run `nf-core/rnaseq` with `--aligner star_salmon`
 
@@ -183,15 +291,17 @@ The launcher will:
 Before launch:
 
 ```bash
-ls -lh references/mouse/host references/mouse/virus
-ls -lh references/rat/host references/rat/virus
+ls -lh references/mouse references/rat references/EEEV references/VEEV
 ```
 
 After reference build:
 
 ```bash
-ls -lh references/mouse/build/combined.fa references/mouse/build/combined.gtf
-grep -c 'gene_id "VEEV_SHARED_GENE"' references/mouse/build/combined.gtf
+ls -lh references/build/mouse_veev/combined.fa references/build/mouse_veev/combined.gtf
+grep -c 'gene_id "VEEV"' references/build/mouse_veev/combined.gtf
+grep -c 'gene_id "EEEV"' references/build/mouse_eeev/combined.gtf
+grep -c 'transcript_id "VEEV_26S"' references/build/mouse_veev/combined.gtf
+grep -c 'transcript_id "EEEV_26S"' references/build/mouse_eeev/combined.gtf
 ```
 
 Queue monitoring:
@@ -203,5 +313,5 @@ squeue -u <netid>
 Dry-run the launcher logic without starting Nextflow:
 
 ```bash
-DRY_RUN=1 SKIP_MODULE_LOAD=1 bash submit_rnaseq.sh mouse
+DRY_RUN=1 SKIP_MODULE_LOAD=1 bash submit_rnaseq.sh mouse_veev
 ```

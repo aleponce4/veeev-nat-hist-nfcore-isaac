@@ -1,21 +1,29 @@
 # Runtime outputs and large analysis products
 results/
 metadata/*.csv
-references/*/build/
+references/build/
+!references/build/
+!references/build/.gitkeep
 
 # User-provided inputs and references
-inputs/mouse/*
-inputs/rat/*
-!inputs/mouse/.gitkeep
-!inputs/rat/.gitkeep
-references/mouse/host/*
-references/mouse/virus/*
-references/rat/host/*
-references/rat/virus/*
-!references/mouse/host/.gitkeep
-!references/mouse/virus/.gitkeep
-!references/rat/host/.gitkeep
-!references/rat/virus/.gitkeep
+inputs/mouse_veev/*
+inputs/mouse_eeev/*
+inputs/rat_veev/*
+!inputs/mouse_veev/.gitkeep
+!inputs/mouse_eeev/.gitkeep
+!inputs/rat_veev/.gitkeep
+references/mouse/*
+references/rat/*
+references/EEEV/*
+references/VEEV/*
+!references/mouse/.gitkeep
+!references/rat/.gitkeep
+!references/EEEV/.gitkeep
+!references/VEEV/.gitkeep
+!references/EEEV/virus.fa
+!references/EEEV/virus.gtf
+!references/VEEV/virus.fa
+!references/VEEV/virus.gtf
 
 # Python cache
 bin/__pycache__/

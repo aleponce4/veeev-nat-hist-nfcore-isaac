@@ -1,0 +1,4 @@
+##gff-version 3.2.1
+##sequence-region VEEV_TrD 1 11446
+VEEV_TrD	.	mRNA	1	11446	.	+	.	ID=mRNA1;Name=VEEV_TrD
+VEEV_TrD	.	Exon	1	11446	.	+	.	Parent=mRNA1
