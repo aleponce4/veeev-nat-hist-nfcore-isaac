@@ -67,7 +67,11 @@ case "$dataset" in
         ;;
 esac
 
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+if [[ -n "${SLURM_SUBMIT_DIR:-}" && -f "${SLURM_SUBMIT_DIR}/settings.env" ]]; then
+    script_dir=$(cd "$SLURM_SUBMIT_DIR" && pwd)
+else
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+fi
 settings_file="$script_dir/settings.env"
 preflight_only=${PREFLIGHT_ONLY:-0}
 
