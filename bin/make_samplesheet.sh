@@ -52,6 +52,7 @@ if [[ ${#r1_files[@]} -eq 0 ]]; then
 fi
 
 declare -A seen=()
+declare -A seen_sheet=()
 
 {
     echo "sample,fastq_1,fastq_2,strandedness"
@@ -59,6 +60,12 @@ declare -A seen=()
     for r1 in "${r1_files[@]}"; do
         base=$(basename "$r1")
         sample=${base%_R1_001.fastq.gz}
+        sheet_sample=$sample
+
+        # nf-core schema rejects purely numeric sample names, so prefix those IDs.
+        if [[ $sample =~ ^[0-9]+$ ]]; then
+            sheet_sample="s${sample}"
+        fi
 
         if [[ -n ${seen["$sample"]+x} ]]; then
             echo "Duplicate sample stem detected: $sample" >&2
@@ -66,13 +73,19 @@ declare -A seen=()
         fi
         seen["$sample"]=1
 
+        if [[ -n ${seen_sheet["$sheet_sample"]+x} ]]; then
+            echo "Duplicate samplesheet sample name detected after normalization: $sheet_sample" >&2
+            exit 1
+        fi
+        seen_sheet["$sheet_sample"]=1
+
         r2="$fastq_dir/${sample}_R2_001.fastq.gz"
         if [[ ! -e "$r2" ]]; then
             echo "Missing mate for sample $sample: expected $r2" >&2
             exit 1
         fi
 
-        printf '%s,%s,%s,%s\n' "$sample" "$r1" "$r2" "$strandedness"
+        printf '%s,%s,%s,%s\n' "$sheet_sample" "$r1" "$r2" "$strandedness"
     done
 } >"$tmp_output"
 
