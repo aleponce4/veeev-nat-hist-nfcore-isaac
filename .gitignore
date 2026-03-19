@@ -9,9 +9,15 @@ references/build/
 inputs/mouse_veev/*
 inputs/mouse_eeev/*
 inputs/rat_veev/*
+inputs/smoke/mouse_veev/*
+inputs/smoke/mouse_eeev/*
+inputs/smoke/rat_veev/*
 !inputs/mouse_veev/.gitkeep
 !inputs/mouse_eeev/.gitkeep
 !inputs/rat_veev/.gitkeep
+!inputs/smoke/mouse_veev/.gitkeep
+!inputs/smoke/mouse_eeev/.gitkeep
+!inputs/smoke/rat_veev/.gitkeep
 references/mouse/*
 references/rat/*
 references/EEEV/*
@@ -33,3 +39,6 @@ bin/__pycache__/
 .DS_Store
 *.swp
 *.swo
+
+# Generated smoke-test metadata
+metadata/smoke/*.csv

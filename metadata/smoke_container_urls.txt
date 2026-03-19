@@ -1,0 +1,8 @@
+https://depot.galaxyproject.org/singularity/fq:0.12.0--h9ee0642_0
+https://depot.galaxyproject.org/singularity/python:3.9--1
+https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0
+https://depot.galaxyproject.org/singularity/fastqc:0.12.1--hdfd78af_0
+https://depot.galaxyproject.org/singularity/trim-galore:0.6.10--hdfd78af_2
+https://depot.galaxyproject.org/singularity/subread:2.0.6--he4a0461_2
+https://depot.galaxyproject.org/singularity/ucsc-bedclip:377--h0b8a92a_2
+https://depot.galaxyproject.org/singularity/ucsc-bedgraphtobigwig:377--h446ed27_1

@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 TRANSCRIPT_FEATURES = {"transcript", "mrna"}
+VIRAL_BIOTYPE = "viral"
 
 
 def open_text(path: Path):
@@ -123,7 +124,11 @@ def normalize_gtf(lines: list[str], shared_gene_id: str) -> list[str]:
             "gene_id",
         )
 
-        out_attrs: dict[str, str] = {"gene_id": shared_gene_id}
+        out_attrs: dict[str, str] = {
+            "gene_id": shared_gene_id,
+            "gene_biotype": VIRAL_BIOTYPE,
+            "gene_type": VIRAL_BIOTYPE,
+        }
         if gene_name:
             out_attrs["gene_name"] = gene_name
 
@@ -136,6 +141,8 @@ def normalize_gtf(lines: list[str], shared_gene_id: str) -> list[str]:
             transcript_id = sanitize_identifier(transcript_id)
             out_attrs["transcript_id"] = transcript_id
             out_attrs["transcript_name"] = choose_value(attrs, "transcript_name", "Name") or transcript_id
+            out_attrs["transcript_biotype"] = VIRAL_BIOTYPE
+            out_attrs["transcript_type"] = VIRAL_BIOTYPE
 
         fields[8] = format_gtf_attributes(out_attrs)
         normalized.append("\t".join(fields) + "\n")
@@ -216,7 +223,11 @@ def normalize_gff(lines: list[str], shared_gene_id: str) -> list[str]:
             gene_name = id_to_gene_name.get(tx_to_gene_ref[transcript_id])
         gene_name = gene_name or choose_value(attrs, "gene", "gene_name", "Name")
 
-        out_attrs: dict[str, str] = {"gene_id": shared_gene_id}
+        out_attrs: dict[str, str] = {
+            "gene_id": shared_gene_id,
+            "gene_biotype": VIRAL_BIOTYPE,
+            "gene_type": VIRAL_BIOTYPE,
+        }
         if gene_name:
             out_attrs["gene_name"] = gene_name
         if feature != "gene":
@@ -226,6 +237,8 @@ def normalize_gff(lines: list[str], shared_gene_id: str) -> list[str]:
                 or choose_value(attrs, "Name")
                 or out_attrs["transcript_id"]
             )
+            out_attrs["transcript_biotype"] = VIRAL_BIOTYPE
+            out_attrs["transcript_type"] = VIRAL_BIOTYPE
 
         fields[8] = format_gtf_attributes(out_attrs)
         normalized.append("\t".join(fields) + "\n")

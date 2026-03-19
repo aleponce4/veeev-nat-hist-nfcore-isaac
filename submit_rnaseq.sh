@@ -21,7 +21,9 @@ set -euo pipefail
 #   nano settings.env
 #   module avail nextflow
 #   python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist"
+#   bash bin/precache_nfcore_containers.sh
 #   PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+#   SMOKE_TEST=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
 #   export ISAAC_ACCOUNT="ACF-UTKXXXX"
 #   export SBATCH_ACCOUNT="$ISAAC_ACCOUNT"
 #   DRY_RUN=1 SKIP_MODULE_LOAD=1 bash submit_rnaseq.sh mouse_veev
@@ -46,6 +48,7 @@ Quick HPC commands:
   nano settings.env
   python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist"
   PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+  SMOKE_TEST=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
   export ISAAC_ACCOUNT="ACF-UTKXXXX"
   export SBATCH_ACCOUNT="$ISAAC_ACCOUNT"
   sbatch submit_rnaseq.sh mouse_veev
@@ -74,6 +77,7 @@ else
 fi
 settings_file="$script_dir/settings.env"
 preflight_only=${PREFLIGHT_ONLY:-0}
+smoke_test=${SMOKE_TEST:-0}
 
 # Step 2: load the central runtime settings, if present.
 if [[ -f "$settings_file" ]]; then
@@ -82,10 +86,13 @@ if [[ -f "$settings_file" ]]; then
 fi
 
 # Step 3: define the dataset-specific inputs, references, and output targets.
+source_fastq_dir="$script_dir/inputs/$dataset"
+fastq_dir="$source_fastq_dir"
 samplesheet="$script_dir/metadata/${dataset}_samplesheet.csv"
-fastq_dir="$script_dir/inputs/$dataset"
 reference_builder="$script_dir/bin/build_combined_reference.sh"
 samplesheet_builder="$script_dir/bin/make_samplesheet.sh"
+smoke_input_builder="$script_dir/bin/prepare_smoke_inputs.py"
+smoke_manifest="$script_dir/metadata/smoke_samples.tsv"
 case "$dataset" in
     mouse_veev)
         host_ref="mouse"
@@ -110,7 +117,16 @@ container_module=${CONTAINER_MODULE:-}
 nfcore_profile=${NFCORE_PROFILE:-}
 results_base=${RESULTS_BASE:-}
 work_root=${WORK_ROOT:-}
+results_base_smoke=${RESULTS_BASE_SMOKE:-}
+work_root_smoke=${WORK_ROOT_SMOKE:-}
 container_cache=${CONTAINER_CACHE:-}
+
+if [[ "$smoke_test" == "1" ]]; then
+    fastq_dir="$script_dir/inputs/smoke/$dataset"
+    samplesheet="$script_dir/metadata/smoke/${dataset}_samplesheet.csv"
+    results_base="$results_base_smoke"
+    work_root="$work_root_smoke"
+fi
 
 work_dir="$work_root/$dataset"
 outdir="$results_base/$dataset"
@@ -167,11 +183,31 @@ check_reference_inputs() {
 }
 
 # Step 4: run lightweight preflight checks that can be used before sbatch.
+if [[ "$smoke_test" == "1" ]]; then
+    smoke_builder_args=(
+        python3 "$smoke_input_builder"
+        "$dataset"
+        "$source_fastq_dir"
+        "$fastq_dir"
+        --config "$smoke_manifest"
+    )
+    if [[ -n "${SMOKE_READ_PAIRS:-}" ]]; then
+        smoke_builder_args+=(--read-pairs "$SMOKE_READ_PAIRS")
+    fi
+    if [[ "${SMOKE_REGENERATE:-0}" == "1" ]]; then
+        smoke_builder_args+=(--force)
+    fi
+    "${smoke_builder_args[@]}"
+fi
+
 check_fastq_inputs
 check_reference_inputs
 
 if [[ "$preflight_only" == "1" ]]; then
     printf 'Preflight checks passed for %s\n' "$dataset"
+    if [[ "$smoke_test" == "1" ]]; then
+        printf 'Mode: smoke\n'
+    fi
     printf 'FASTQs: %s\n' "$fastq_dir"
     printf 'Host reference dir:  %s (%s)\n' "$host_dir" "$host_ref"
     printf 'Virus reference dir: %s (%s)\n' "$virus_dir" "$virus_ref"
@@ -316,6 +352,9 @@ fi
 
 # Step 10: launch the actual pipeline on the allocated compute node.
 printf 'Launching nf-core/rnaseq for %s\n' "$dataset"
+if [[ "$smoke_test" == "1" ]]; then
+    printf 'Mode: smoke\n'
+fi
 printf 'Results: %s\n' "$outdir"
 printf 'Work dir: %s\n' "$work_dir"
 printf 'Settings file: %s\n' "$settings_file"

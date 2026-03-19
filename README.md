@@ -24,8 +24,13 @@ veeev_nat_hist_nfcore/
 ├── inputs/
 │   ├── mouse_veev/
 │   ├── mouse_eeev/
-│   └── rat_veev/
+│   ├── rat_veev/
+│   └── smoke/
+│       ├── mouse_veev/
+│       ├── mouse_eeev/
+│       └── rat_veev/
 ├── metadata/
+│   └── smoke/
 ├── settings.env
 ├── references/
 │   ├── mouse/
@@ -51,7 +56,10 @@ Expected reference inputs:
 Generated files:
 
 - `metadata/nat_hist_manifest.csv`
+- `metadata/catalog/nat_hist_samples.tsv`
+- `metadata/catalog/<dataset>.tsv`
 - `metadata/<dataset>_samplesheet.csv`
+- `metadata/smoke/<dataset>_samplesheet.csv`
 - `references/build/<dataset>/combined.fa`
 - `references/build/<dataset>/combined.gtf`
 - `viral_references/curation/empirical_tss_results.tsv`
@@ -215,12 +223,118 @@ python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist" --manifest-only
 python3 bin/stage_nat_hist_inputs.py "/path/to/V-EEEV Nat Hist" --method copy --clean
 ```
 
+## Metadata Catalog
+
+The scaffold now keeps two separate metadata products for the natural history inputs:
+
+- `metadata/nat_hist_manifest.csv`: local staging manifest with machine-specific absolute paths; this file is intentionally ignored by Git
+- `metadata/catalog/*.tsv`: tracked, repo-safe sample catalog with stable annotations and repo-relative staged FASTQ paths
+
+Export the tracked catalog from the local manifest with:
+
+```bash
+python3 bin/export_nat_hist_catalog.py
+```
+
+Optional explicit paths:
+
+```bash
+python3 bin/export_nat_hist_catalog.py \
+  --manifest metadata/nat_hist_manifest.csv \
+  --output-dir metadata/catalog
+```
+
+Tracked catalog outputs:
+
+- `metadata/catalog/nat_hist_samples.tsv`
+- `metadata/catalog/mouse_veev.tsv`
+- `metadata/catalog/mouse_eeev.tsv`
+- `metadata/catalog/rat_veev.tsv`
+
+Column notes:
+
+- `study_code`: mouse study block code when it is explicitly known
+- `route`: inoculation route for mapped mouse study blocks
+- `day`: intentionally blank until an explicit per-sample day mapping exists
+- `infection_status`: `unknown` for mouse studies until the virus/mock map is resolved; blank for the separate rat study
+
+Current metadata defaults:
+
+- three-digit mouse samples in studies `045`, `046`, `047`, and `048` keep blank `day` and `infection_status=unknown`
+- five-digit `4xxxx` samples are treated as a separate `EEEV BDGR251` study, not as part of study `048`
+- `B*` and `L*` samples are tracked as a separate `B/L Chibuke Rat study`
+
 Reference preflight:
 
 ```bash
 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_eeev
 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat_veev
+```
+
+## Smoke Testing
+
+Use smoke mode to run one tiny representative sample per dataset through the full `nf-core/rnaseq` workflow before launching the real jobs. The smoke inputs are generated on demand from the staged real FASTQs and written under `inputs/smoke/`.
+
+Tracked smoke configuration:
+
+- `metadata/smoke_samples.tsv`: representative sample ID and default read-pair count per dataset
+- `metadata/smoke_container_urls.txt`: known container URLs to pre-cache on the login node
+
+Representative smoke samples currently configured:
+
+- `mouse_veev` -> `101`
+- `mouse_eeev` -> `201`
+- `rat_veev` -> `B10`
+
+Generate or refresh one smoke subset and verify preflight:
+
+```bash
+SMOKE_TEST=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+SMOKE_TEST=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_eeev
+SMOKE_TEST=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh rat_veev
+```
+
+Override the default subset size or force regeneration:
+
+```bash
+SMOKE_TEST=1 SMOKE_READ_PAIRS=50000 SMOKE_REGENERATE=1 PREFLIGHT_ONLY=1 bash submit_rnaseq.sh mouse_veev
+```
+
+Smoke runs use separate scratch-backed output roots:
+
+- `results_smoke/<dataset>`
+- `work_smoke/<dataset>`
+
+Run all three smoke tests sequentially:
+
+```bash
+job1=$(sbatch --parsable --account="$ISAAC_ACCOUNT" --export=ALL,SMOKE_TEST=1 submit_rnaseq.sh mouse_veev)
+job2=$(sbatch --parsable --account="$ISAAC_ACCOUNT" --dependency=afterany:$job1 --export=ALL,SMOKE_TEST=1 submit_rnaseq.sh mouse_eeev)
+sbatch --account="$ISAAC_ACCOUNT" --dependency=afterany:$job2 --export=ALL,SMOKE_TEST=1 submit_rnaseq.sh rat_veev
+```
+
+A passing smoke test should exercise the full workflow, including:
+
+- `SALMON_QUANT`
+- `STAR_ALIGN`
+- `SUBREAD_FEATURECOUNTS`
+- `UCSC_BEDCLIP` / `BEDGRAPH...BIGWIG`
+
+## Container Pre-cache
+
+On clusters where compute nodes cannot reach the internet, pre-pull known container images from the login node before smoke or production launches:
+
+```bash
+bash bin/precache_nfcore_containers.sh
+```
+
+To augment the known URL list with images seen in prior manager logs:
+
+```bash
+bash bin/precache_nfcore_containers.sh \
+  --log-file nfcore_rnaseq.5069375.out \
+  --log-file nfcore_rnaseq.5080364.out
 ```
 
 ## Environment
