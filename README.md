@@ -1,6 +1,6 @@
 # V-EEEV Nat Hist RNA-seq Pipeline
 
-Small wrapper repo for running `nf-core/rnaseq` (`3.23.0`) on the V-EEEV natural history datasets on HPC.
+Wrapper repo for running `nf-core/rnaseq` (`3.23.0`) on the V-EEEV natural history datasets on HPC.
 RNA-seq workflow used for analysis of alphavirus infection studies.  
 Supports mixed host/viral transcriptome analysis across multiple species (mouse and rat) with automated dataset staging and reference preparation.
 
