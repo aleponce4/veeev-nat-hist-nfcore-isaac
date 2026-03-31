@@ -149,7 +149,7 @@ def discover_bams(results_root: Path, datasets: tuple[str, ...]) -> list[dict[st
                 continue
             sample_id = bam_path.name
             if sample_id.endswith(".markdup.sorted.bam"):
-                sample_id = sample_id.removesuffix(".markdup.sorted.bam")
+                sample_id = sample_id[: -len(".markdup.sorted.bam")]
             else:
                 sample_id = bam_path.stem
             candidates.append(

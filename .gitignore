@@ -1,9 +1,10 @@
 # Runtime outputs and large analysis products
 results/
 metadata/*.csv
-references/build/
-!references/build/
+references/build/*
 !references/build/.gitkeep
+viral_references/polish/
+virus_polish.*.out
 
 # User-provided inputs and references
 inputs/mouse_veev/*
