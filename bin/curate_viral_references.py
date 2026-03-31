@@ -51,8 +51,15 @@ VIRUS_SPECS = {
 }
 
 
+def default_viral_work_root(root_dir: Path) -> Path:
+    preferred = root_dir / "viral_reference_work"
+    legacy = root_dir / "viral_references"
+    return preferred if preferred.exists() or not legacy.exists() else legacy
+
+
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
+    viral_work_root = default_viral_work_root(root_dir)
     parser = argparse.ArgumentParser(
         description=(
             "Use a two-tier viral-only pilot mapping workflow to derive empirical "
@@ -66,8 +73,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--raw-root",
-        default=str(root_dir / "viral_references" / "raw"),
-        help="Tracked raw viral reference root (default: repo viral_references/raw)",
+        default=str(viral_work_root / "raw"),
+        help="Tracked raw viral reference root (default: repo viral_reference_work/raw)",
     )
     parser.add_argument(
         "--input-root",
@@ -81,7 +88,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--results-dir",
-        default=str(root_dir / "viral_references" / "curation"),
+        default=str(viral_work_root / "curation"),
         help="Directory for tracked empirical TSS metadata tables.",
     )
     parser.add_argument(

@@ -56,8 +56,14 @@ if [[ -f "$settings_file" ]]; then
     source "$settings_file"
 fi
 
+if [[ -d "$script_dir/viral_reference_work" || ! -d "$script_dir/viral_references" ]]; then
+    viral_work_root="$script_dir/viral_reference_work"
+else
+    viral_work_root="$script_dir/viral_references"
+fi
+
 results_root=${POLISH_RESULTS_ROOT:-${RESULTS_BASE:-$script_dir/results}}
-output_root=${POLISH_OUTPUT_ROOT:-$script_dir/viral_references/polish}
+output_root=${POLISH_OUTPUT_ROOT:-$viral_work_root/polish}
 samtools_module=${SAMTOOLS_MODULE:-samtools}
 bcftools_module=${BCFTOOLS_MODULE:-bcftools}
 

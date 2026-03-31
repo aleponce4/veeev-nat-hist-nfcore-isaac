@@ -3,6 +3,7 @@ results/
 metadata/*.csv
 references/build/*
 !references/build/.gitkeep
+viral_reference_work/polish/
 viral_references/polish/
 virus_polish.*.out
 

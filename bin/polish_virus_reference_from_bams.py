@@ -25,8 +25,15 @@ VIRUS_SPECS = {
 }
 
 
+def default_viral_work_root(root_dir: Path) -> Path:
+    preferred = root_dir / "viral_reference_work"
+    legacy = root_dir / "viral_references"
+    return preferred if preferred.exists() or not legacy.exists() else legacy
+
+
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
+    viral_work_root = default_viral_work_root(root_dir)
     parser = argparse.ArgumentParser(
         description=(
             "Reuse existing STAR BAM outputs to build guided viral consensus FASTAs "
@@ -50,7 +57,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-root",
-        default=str(root_dir / "viral_references" / "polish"),
+        default=str(viral_work_root / "polish"),
         help="Output root for polished FASTAs, VCFs, and summaries.",
     )
     parser.add_argument(
